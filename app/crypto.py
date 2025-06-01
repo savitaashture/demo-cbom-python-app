@@ -39,6 +39,9 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.hashes import Hash, SHA256
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.padding import OAEP, MGF1
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
 import base64
 import os
 
@@ -83,3 +86,51 @@ message_digest = digest.finalize()
 
 # Generate a seed for randomness
 seed = os.urandom(32)
+
+# Generate RSA key pair
+private_key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=2048,
+    backend=default_backend()
+)
+public_key = private_key.public_key()
+
+# Serialize keys
+private_key_pem = private_key.private_bytes(
+    encoding=Encoding.PEM,
+    format=PrivateFormat.PKCS8,
+    encryption_algorithm=NoEncryption()
+)
+public_key_pem = public_key.public_bytes(
+    encoding=Encoding.PEM,
+    format=PublicFormat.SubjectPublicKeyInfo
+)
+
+# Encrypt data using the public key
+def encrypt_with_public_key(data):
+    ciphertext = public_key.encrypt(
+        data.encode(),
+        OAEP(
+            mgf=MGF1(algorithm=SHA256()),
+            algorithm=SHA256(),
+            label=None
+        )
+    )
+    return base64.b64encode(ciphertext).decode()
+
+# Decrypt data using the private key
+def decrypt_with_private_key(ciphertext):
+    plaintext = private_key.decrypt(
+        base64.b64decode(ciphertext),
+        OAEP(
+            mgf=MGF1(algorithm=SHA256()),
+            algorithm=SHA256(),
+            label=None
+        )
+    )
+    return plaintext.decode()
+
+# Example usage
+data = "Sensitive information"
+ciphertext = encrypt_with_public_key(data)
+decrypted_data = decrypt_with_private_key(ciphertext)
