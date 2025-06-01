@@ -1,15 +1,31 @@
-# Insecure crypto.py
-import hashlib
-from Crypto.Cipher import DES
-from Crypto.Util.Padding import pad, unpad
+# Secure crypto.py
+from cryptography.hazmat.primitives.hashes import Hash, SHA256
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.padding import PKCS7
+from cryptography.hazmat.backends import default_backend
+import os
 import base64
 
 def hash_password(pwd):
-    return hashlib.md5(pwd.encode()).hexdigest()  # ❌ Insecure hash
+    digest = Hash(SHA256(), backend=default_backend())
+    digest.update(pwd.encode())
+    return digest.finalize().hex()
 
 def encrypt_user_data(username, password):
-    key = b"12345678"  # ❌ Hardcoded weak key
-    cipher = DES.new(key, DES.MODE_ECB)  # ❌ ECB mode
+    salt = os.urandom(16)
+    kdf = PBKDF2HMAC(
+        algorithm=SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+    )
+    key = kdf.derive(password.encode())
+    iv = os.urandom(12)
+    cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
+    encryptor = cipher.encryptor()
     data = f"{username}:{password}".encode()
-    encrypted = cipher.encrypt(pad(data, 8))
-    return base64.b64encode(encrypted).decode()
+    padded_data = PKCS7(128).padder().update(data) + PKCS7(128).padder().finalize()
+    encrypted = encryptor.update(padded_data) + encryptor.finalize()
+    return base64.b64encode(salt + iv + encrypted).decode()
