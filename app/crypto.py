@@ -1,3 +1,16 @@
+# This code is intentionally insecure and should not be used in production.
+# It is provided for educational purposes only to demonstrate poor cryptographic practices.
+
+'''
+| Aspect         | Issue                         |
+| -------------- | ----------------------------- |
+| Hardcoded Key  | Easy to guess/crack           |
+| Fixed IV       | Vulnerable to pattern attacks |
+| CBC Mode       | No integrity check            |
+| Manual Padding | Easy to corrupt or exploit    |
+| No KDF or Salt | Password reused as-is         |
+'''
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.hashes import Hash, SHA256
 from cryptography.hazmat.backends import default_backend
