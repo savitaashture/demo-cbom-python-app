@@ -25,13 +25,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate CBOM
-        uses: PQCA/cbomkit-action@v2.0.0
-        id: cbom
-
-      # Save CBOM to test.json
-      - name: Save CBOM to file
+      - name: Find site-packages path
+        id: find-site-packages
         run: |
-          cp ${{ steps.cbom.outputs.pattern }} test.json
-          echo "Saved CBOM to test.json"
-          ls -l test.json          
+          SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
+          echo "site_packages=$SITE_PACKAGES" >> $GITHUB_OUTPUT
+
+      - name: Run CBOMKit Action (Python)
+        uses: PQCA/cbomkit-action@main
+        env:
+          CBOMKIT_PYTHON_SITE_PACKAGES: ${{ steps.find-site-packages.outputs.site_packages }}
+        
