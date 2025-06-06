@@ -1,0 +1,38 @@
+name: CBOM Generation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  generate-cbom:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'  # Or your project version
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate CBOM
+        uses: PQCA/cbomkit-action@main
+        with:
+          language: python
+
+      # Save CBOM to test.json
+      - name: Save CBOM to file
+        run: |
+          cp ${{ steps.cbom.outputs.pattern }} test.json
+          echo "Saved CBOM to test.json"
+          ls -l test.json          
