@@ -26,9 +26,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Generate CBOM
-        uses: PQCA/cbomkit-action@main
-        with:
-          language: python
+        uses: PQCA/cbomkit-action@v2.0.0
+        id: cbom
 
       # Save CBOM to test.json
       - name: Save CBOM to file
